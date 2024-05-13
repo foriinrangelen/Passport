@@ -26,8 +26,8 @@ const userSchema = new mongoose.Schema({
 });
 userSchema.methods.comparePassword = function (plainPassword) {
   return new Promise((resolve, reject) => {
-    // 이 예제에서는 단순 문자열 비교를 통해 비밀번호를 확인합니다.
-    // 실제 애플리케이션에서는 보안상의 이유로 bcrypt 같은 해시 함수를 사용하는 것이 좋습니다.
+    // 이 예제에서는 단순 문자열 비교를 통해 비밀번호를 확인
+    // 실무나 프로젝트라면 bcrypt모듈 사용해서 해시화
     if (plainPassword === this.password) {
       resolve(true);
     } else {
