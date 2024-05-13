@@ -8,3 +8,8 @@ Node.js를 위한 인증(authentication)과 인가(authorization)를 구현하�
 
 ### 로그인 화면 구현
 1. `npm i ejs`
+```javascript
+// server.js
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "ejs");
+```
