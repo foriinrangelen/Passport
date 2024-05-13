@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 // 스키마 생성
 const userSchema = new mongoose.Schema({
@@ -23,23 +24,36 @@ const userSchema = new mongoose.Schema({
     sparse: true,
   },
 });
+userSchema.methods.comparePassword = function (plainPassword) {
+  return new Promise((resolve, reject) => {
+    // 이 예제에서는 단순 문자열 비교를 통해 비밀번호를 확인합니다.
+    // 실제 애플리케이션에서는 보안상의 이유로 bcrypt 같은 해시 함수를 사용하는 것이 좋습니다.
+    if (plainPassword === this.password) {
+      resolve(true);
+    } else {
+      resolve(false);
+    }
+  });
+};
 
 // comparePassword
-userSchema.methods.comparePassword = async function (plainPassword, callback) {
-  // 원래라면 bcrypt 모듈을 활용하여 compare 비교해야함 임시대기
-  // plainPassword => 클라이언트에서 온 password, this.password는 DB에 있는 비밀번호가 담김
-  // comparePassword의 두번째 매개변수인 콜백은 전략에서 사용되고있는 comparePassword의 두번째 매개변수 콜백으로 이동한다
-  // 같은함수임, 정의를 모델에서 한거
-  if (plainPassword === this.password) {
-    // 비밀번호가 일치한다면 callback함수의 두번째 인자로 true 담기
-    callback(null, true);
-  } else {
-    // 틀리면 false담기
-    callback(null, false);
-  }
-  // 에러면 콜백첫번재인자로 에러담긴 객체 리턴
-  return cb({ error: "error" });
-};
+// userSchema.methods.comparePassword = function (plainPassword, callback) {
+//   // 원래라면 bcrypt 모듈을 활용하여 compare 비교해야함 임시대기
+//   // plainPassword => 클라이언트에서 온 password, this.password는 DB에 있는 비밀번호가 담김
+//   // comparePassword의 두번째 매개변수인 콜백은 전략에서 사용되고있는 comparePassword의 두번째 매개변수 콜백으로 이동한다
+//   // 같은함수임, 정의를 모델에서 한거
+//   console.log("plainPassword : ", plainPassword);
+//   console.log("this.password : ", this.password);
+//   if (plainPassword === this.password) {
+//     // 비밀번호가 일치한다면 callback함수의 두번째 인자로 true 담기
+//     callback(null, true);
+//   } else {
+//     // 틀리면 false담기
+//     callback(null, false);
+//   }
+//   // 에러면 콜백첫번재인자로 에러담긴 객체 리턴
+//   return callback({ error: "error" });
+// };
 
 // 모델은 스키마를 사용하여 실제 데이터베이스 작업을 수행하는 메서드를 제공하는 객체
 const User = mongoose.model("User", userSchema);

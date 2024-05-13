@@ -3,8 +3,34 @@ const { default: mongoose } = require("mongoose");
 const path = require("path");
 const User = require("./models/users.model");
 const app = express();
+
 // passport 모듈 사용하기
 const passport = require("passport");
+const cookieSession = require("cookie-session");
+// 임시 key
+const cookieEncryptionKey = "secret-key-123456789012345";
+app.use(
+  cookieSession({
+    name: "cookie-session-namee", // 쿠키이름설정
+    // keys 옵션은 cookieSession 미들웨어에서 사용하는 쿠키를 암호화하는 데 사용되는 키들의 배열
+    keys: [cookieEncryptionKey], // key는 배열로 들어감
+  })
+);
+// passport 6.0버전이상과  cookie-session 을 같이 사용하면나오는
+// req.session.regenerate is not a function 에러 해결하기위한 미들웨어
+app.use(function (request, response, next) {
+  if (request.session && !request.session.regenerate) {
+    request.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (request.session && !request.session.save) {
+    request.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
 // passport 전략 수행 순서
 // 1. app.post("/login", 으로 요청이 들어옴
 // 2. passport.authenticate("local", (err, user, info) => { 전략에 맞게 authenticate메서드 실행
@@ -26,6 +52,9 @@ app.use(express.json());
 // form태그에서 전달받은 값을 받기위한 미들웨어
 app.use(express.urlencoded({ extended: false }));
 app.use("/static", express.static(path.join(__dirname, "..", "public")));
+app.get("/", (req, res) => {
+  res.render("index");
+});
 
 // view engine 설정
 app.set("views", path.join(__dirname, "views"));
@@ -52,6 +81,7 @@ app.post("/login", (req, res, next) => {
   // 로컬 로그인전략을 사용하기때문에 passport모듈의 authenticate 메서드를 사용해서 "local"
   // authenticate() : 전략 불러오는 메서드
   // done 호출시 authenticate메서드 두번째 매개변수 콜백실행
+  // console.log("222222222222222222");
   passport.authenticate("local", (err, user, info) => {
     // done에 null이 담겨왔다면(에러발생) 담겨 왔다면 express 에러처리기로 이동(next)
     if (err) return next(err);
@@ -66,7 +96,7 @@ app.post("/login", (req, res, next) => {
       // 로그인 성공시 루트페이지로 이동
       res.redirect("/");
     });
-  });
+  })(req, res, next); // 미들웨어 안의 미들웨어를 호출하려면 ()을붙여 호출을 추가로 해줘야하고 안에 req,res,next 매개변수도 넣어줘야하낟
 });
 
 // /signup 요청시 회원가입 페이지로 이동

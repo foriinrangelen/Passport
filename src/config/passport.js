@@ -19,10 +19,11 @@ passport.serializeUser((user, done) => {
   done(null, user.id);
 });
 
+// eserializeUser(): 클라이언트에서 세션데이터를 가지고 request 요청 시 실행되는 메서드
 // 유저가 페이지에 들어갈때마다 deserializeUser 메서드가 호출되며 여기에서는 serializeUser에서 사용된 id를 이용해서
 // 데이터베이스에서 유저를 찾아 유저의 모든정보를 가져온다
 // done(null, user) 은 req.user객체에 들어가서 유저정보를 사용할 수 있게 해준다
-// deserializeUser()에 들어가는 첫번째 매개변수 id는 serializeUser에서 사용된 id
+// deserializeUser()에 들어가는 첫번째 매개변수 id는 serializeUser에서 사용된 id (id는 passport가 넣어줌)
 passport.deserializeUser((id, done) => {
   User.findById(id).then((user) => {
     done(null, user);
@@ -33,32 +34,58 @@ passport.deserializeUser((id, done) => {
 // 해주면 콜백의 인자로 email을 받을 수 있다
 // 전략 내에서 done이 호출된다면 server.js내의 api의 callback함수가 실행된다
 // localStrategy(아이디비밀번호 객체, 콜백함수)
+// ❌findOne()도 save()와 마찬가지로 몽구스 5.0부터는 콜백함수를 지원하지 않음❗❗❌
+// passport.use(
+//   "local",
+//   new localStrategy(
+//     { usernameField: "email", passwordField: "password" },
+//     (email, password, done) => {
+//       // User.findOne(이메일, 콜백함수)
+//       // 클라이언트로 입력받은 이메일 .toLocaleLowerCase()해서 비교후 콜백실행
+//       User.findOne({ email: email.toLocaleLowerCase() }, (err, user) => {
+//         // 에러라면 err 리턴해서 api콜백으로 이동
+//         if (err) return done(err);
+//         // 에러는 아니지만 유저가 없다면 이메일이 없다고 메세지 api콜백으로 이동
+//         if (!user) {
+//           return done(null, false, { message: `Email ${email} not found` });
+//         }
+
+//         // 유저가 있다면 비밀번호 일치하는 지 확인, comparePassword함수는 models/모델파일에서 정의
+//         user.comparePassword(password, (err, isMatch) => {
+//           // 에러라면 err 리턴해서 api콜백으로 이동
+//           if (err) return done(err);
+//           // 비밀번호가 틀리다면 메세지와함께 false리턴
+//           if (!isMatch) {
+//             return done(null, false, { message: `Invalid email & password` });
+//           }
+//           // 비밀번호가 일치한다면 일치한 user객체 return
+//           return done(null, user);
+//         });
+//       });
+//     }
+//   )
+// );
 passport.use(
+  "local",
   new localStrategy(
     { usernameField: "email", passwordField: "password" },
     async (email, password, done) => {
-      // User.findOne(이메일, 콜백함수)
-      // 클라이언트로 입력받은 이메일 .toLocaleLowerCase()해서 비교후 콜백실행
-      User.findOne({ email: email.toLocaleLowerCase() }, (err, user) => {
-        // 에러라면 err 리턴해서 api콜백으로 이동
-        if (err) return done(err);
-        // 에러는 아니지만 유저가 없다면 이메일이 없다고 메세지 api콜백으로 이동
+      try {
+        const user = await User.findOne({ email: email.toLocaleLowerCase() });
+
         if (!user) {
-          return done(null, false, { message: `Email ${email} not found` });
+          return done(null, false, { message: `Email ${email} not found.` });
         }
 
-        // 유저가 있다면 비밀번호 일치하는 지 확인, comparePassword함수는 models/모델파일에서 정의
-        user.comparePassword(password, (err, isMatch) => {
-          // 에러라면 err 리턴해서 api콜백으로 이동
-          if (err) return done(err);
-          // 비밀번호가 틀리다면 메세지와함께 false리턴
-          if (!isMatch) {
-            return done(null, false, { message: `Invalid email & password` });
-          }
-          // 비밀번호가 일치한다면 일치한 user객체 return
-          return done(null, user);
-        });
-      });
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+          return done(null, false, { message: `Invalid email & password.` });
+        }
+        console.log("user생성? : ", user);
+        return done(null, user);
+      } catch (err) {
+        return done(err);
+      }
     }
   )
 );
