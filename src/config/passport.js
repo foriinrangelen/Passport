@@ -92,14 +92,13 @@ const localStrategyConfig= new localStrategy({ usernameField: "email", passwordF
 passport.use("local", localStrategyConfig);
 // ------------------------------------------------------------------------------------------
 // google passport 전략
-const googleClientId = "797292532711-fpa3ood5vfutq5e3ifmvfbq4i2bkdkgo.apps.googleusercontent.com";
-const googleClientSecret = "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";
+
 // 구글 전략 설정
 const GoogleStrategyConfig = new GoogleStrategy(
   {
     // 생성할때 받은 id 시크릿키, 리다이렉트 uri 입력
-    clientID: googleClientId,
-    clientSecret: googleClientSecret,
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: "/auth/google/callback",
     // 무엇을 받아올건지 scope로 정의
     scope: ["email", "profile"],

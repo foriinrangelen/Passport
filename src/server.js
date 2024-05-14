@@ -5,6 +5,8 @@ const User = require("./models/users.model");
 const app = express();
 
 // passport 모듈 사용하기
+// .env설정
+require("dotenv").config();
 const passport = require("passport");
 const cookieSession = require("cookie-session");
 const { isAuth, isNotAuth } = require("./middlewares/auth");
