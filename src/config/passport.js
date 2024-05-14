@@ -16,6 +16,7 @@ const localStrategy = require("passport-local").Strategy;
 // 5. 유저 model의 인스턴스(DB에서 가져온 사용자 모든정보)를 req.user에 저장
 // 6. 요청이 route handler로 이동, 사용
 passport.serializeUser((user, done) => {
+  console.log(user);
   done(null, user.id);
 });
 
@@ -65,27 +66,24 @@ passport.deserializeUser((id, done) => {
 //     }
 //   )
 // );
-passport.use(
-  "local",
-  new localStrategy(
-    { usernameField: "email", passwordField: "password" },
+// prettier-ignore
+passport.use("local", new localStrategy({ usernameField: "email", passwordField: "password" }, 
     async (email, password, done) => {
-      try {
-        const user = await User.findOne({ email: email.toLocaleLowerCase() });
+    try {
+      const user = await User.findOne({ email: email.toLocaleLowerCase() });
 
-        if (!user) {
-          return done(null, false, { message: `Email ${email} not found.` });
-        }
-
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-          return done(null, false, { message: `Invalid email & password.` });
-        }
-        console.log("user생성? : ", user);
-        return done(null, user);
-      } catch (err) {
-        return done(err);
+      if (!user) {
+        return done(null, false, { message: `Email ${email} not found.` });
       }
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return done(null, false, { message: `Invalid email & password.` });
+      }
+      console.log("user생성? : ", user);
+      return done(null, user);
+    } catch (err) {
+      return done(err);
     }
-  )
+  })
 );

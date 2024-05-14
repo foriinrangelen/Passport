@@ -7,6 +7,7 @@ const app = express();
 // passport 모듈 사용하기
 const passport = require("passport");
 const cookieSession = require("cookie-session");
+const { isAuth, isNotAuth } = require("./middlewares/auth");
 // 임시 key
 const cookieEncryptionKey = "secret-key-123456789012345";
 app.use(
@@ -46,13 +47,14 @@ app.use(passport.initialize());
 // passport.session()은 serializeUser와 deserializeUser 호출을 통해 사용자 세션을 자동으로 관리
 // serializeUser: 사용자 인증 성공 시, 사용자 정보를 세션에 저장하는 방법을 정의
 // deserializeUser: 각 요청 시, 세션에서 사용자 정보를 불러오는 방법을 정의
-app.use("expreess-session", passport.session());
+app.use(passport.session());
 
 app.use(express.json());
 // form태그에서 전달받은 값을 받기위한 미들웨어
 app.use(express.urlencoded({ extended: false }));
 app.use("/static", express.static(path.join(__dirname, "..", "public")));
-app.get("/", (req, res) => {
+// isAuth: 로그인이 되있는지 확인하는 함수 로그인이 되어있다면 next(), 안되있다면 로그인페이지로 리다이렉트
+app.get("/", isAuth, (req, res) => {
   res.render("index");
 });
 
@@ -62,9 +64,7 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
 mongoose
-  .connect(
-    `mongodb+srv://kyyyy8629:1234@express-cluster.fzshmg3.mongodb.net/?retryWrites=true&w=majority&appName=express-Cluster`
-  )
+  .connect(`mongodb+srv://kyyyy8629:1234@express-cluster.fzshmg3.mongodb.net/?retryWrites=true&w=majority&appName=express-Cluster`)
   .then(() => {
     console.log("connected to mongodb");
   })
@@ -74,7 +74,8 @@ mongoose
 // console.log(path.join(__dirname, "..", "public"));
 
 // /login 요청시 로그인페이지로 이동
-app.get("/login", (req, res) => {
+//isNotAuth: 로그인이 되어있다면 루트페이지로 리다이렉트 안되있다면 진행
+app.get("/login", isNotAuth, (req, res) => {
   res.render("login");
 });
 app.post("/login", (req, res, next) => {
@@ -90,17 +91,18 @@ app.post("/login", (req, res, next) => {
     // 정상적으로 일치했을시 passport에서 제공해주는 req.login()메서드 실행
     // req.login(): 사용자세션을 수립하기위해 사용, 아래 과정을 통해 user 객체 정보가req.user에 할당된다
     // 1. passport.serializer() 함수로 이동
+    console.log("req.login 들어가기전 user:", user);
     req.logIn(user, (err) => {
       // 에러 발생시 에러처리기로 이동
       if (err) return next(err);
       // 로그인 성공시 루트페이지로 이동
       res.redirect("/");
     });
-  })(req, res, next); // 미들웨어 안의 미들웨어를 호출하려면 ()을붙여 호출을 추가로 해줘야하고 안에 req,res,next 매개변수도 넣어줘야하낟
+  })(req, res, next); // 미들웨어 안의 미들웨어를 호출하려면 ()을붙여 호출을 추가로 해줘야하고 안에 req,res,next 매개변수도 넣어줘야한다
 });
 
 // /signup 요청시 회원가입 페이지로 이동
-app.get("/signup", (req, res) => {
+app.get("/signup", isNotAuth, (req, res) => {
   res.render("signup");
 });
 
