@@ -33,3 +33,12 @@ SHA25 등으로 hash화 해서 저장
 ex 1234=> salt_1234
 
 bcryptjs 모듈은 salt+해시화를 지원
+
+### social login 구현해보기
+#### Google Oauth key 생성
+1. `https://console.cloud.google.com/apis/dashboard`
+2. 프로젝트 생성> Oauth 동의화면 이동 > create > 정보입력 > 저장후 계속 끝까지
+3. 사용자 인증정보 이동 > 사용자 인증정보만들기+Oauth 클라이언트ID 이동
+4. 유형,이름 redirect URIs `http://localhost:4000/auth/google/callback` 입력 후 create
+5. 클라이언트 ID, 클라이언트 보안비밀번호 체크
+
