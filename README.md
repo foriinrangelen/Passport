@@ -41,4 +41,12 @@ bcryptjs 모듈은 salt+해시화를 지원
 3. 사용자 인증정보 이동 > 사용자 인증정보만들기+Oauth 클라이언트ID 이동
 4. 유형,이름 redirect URIs `http://localhost:4000/auth/google/callback` 입력 후 create
 5. 클라이언트 ID, 클라이언트 보안비밀번호 체크
+#### Oauth ( Open Authorization )란?
+OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준
+신뢰할 수 있는 외부 어플리케이션(Naver, Google, Kakao, Facebook 등)의 Open API에ID, PW를 입력하여 해당 어플리케이션이 인증 과정을 처리해주는 방식
+![image](https://github.com/foriinrangelen/Passport/assets/123726292/059e6a8d-735e-4997-8091-a7baa6a2fcd2)
+
+
+#### Oauth 흐름
+![image](https://github.com/foriinrangelen/Passport/assets/123726292/7a42c854-9245-4586-a3f5-d6eef640d170)
 
