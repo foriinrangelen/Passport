@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-
+const bcrypt = require("bcryptjs");
 // 스키마 생성
 const userSchema = new mongoose.Schema({
   email: {
@@ -24,15 +23,41 @@ const userSchema = new mongoose.Schema({
     sparse: true,
   },
 });
+// salt길이 설정
+const saltRounds = 10;
+// pre(): save()이전에 실행될 메서드 정의하기- 비밀번호 salt+hash화 하기
+userSchema.pre("save", function (next) {
+  let user = this; // 여기서 this란 그때 당시에 생성된 user객체
+  // isModified(): 해당 스키마의 속성이 변경되었는지 확인하는 메서드, 여기서는 비밀번호를 입력받으면 변경된거니 true값을 리턴
+  if (user.isModified("password")) {
+    // getSalt()메서드로 salt생성
+    bcrypt.genSalt(saltRounds, (err, salt) => {
+      if (err) return next(err);
+      // bcrypt 의 hash메서드로 salt+user.password로 해시화된 비밀번호 생성
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        if (err) return next(err);
+        // 현재 유저 인스턴스 패스워드에 hash된값 담기
+        user.password = hash;
+        // 다시 실행되기전의 save()로 이동
+        next();
+      });
+    });
+    // 구글 로그인등 소셜로그인시에는 비밀번호를 입력받지않기때문에 여기에서 멈춰버림
+  } else {
+    next();
+  }
+});
+
 userSchema.methods.comparePassword = function (plainPassword) {
   return new Promise((resolve, reject) => {
-    // 이 예제에서는 단순 문자열 비교를 통해 비밀번호를 확인
-    // 실무나 프로젝트라면 bcrypt모듈 사용해서 해시화
-    if (plainPassword === this.password) {
-      resolve(true);
-    } else {
-      resolve(false);
-    }
+    // bcryptjs모듈의 compare()메서드로 this.password와 salt+해시화된 비밀번호를 비교하기
+    // plainPassword: 사용자에 입력받은 평문 password
+    // this.password: mongoose 모델 인스턴스의 패스워드(이미 salt+해시화된 비밀번호)
+    // this는 함수가 호출될때 결정되기때문에 comparePassword()메서드가 호출될때에는 findOne해서 찾아온 유저인스턴스를 가리킴
+    bcrypt.compare(plainPassword, this.password, (err, isMatch) => {
+      if (err) reject(err);
+      else resolve(isMatch);
+    });
   });
 };
 

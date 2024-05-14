@@ -100,7 +100,14 @@ app.post("/login", (req, res, next) => {
     });
   })(req, res, next); // 미들웨어 안의 미들웨어를 호출하려면 ()을붙여 호출을 추가로 해줘야하고 안에 req,res,next 매개변수도 넣어줘야한다
 });
-
+// 로그아웃버튼 클릭시
+app.post("/logout", (req, res, next) => {
+  // req.logout(): passport에서 제공하는 메서드로,사용자 세션을 종료시키는 함수
+  req.logOut((err) => {
+    if (err) return next(err);
+    res.redirect("/");
+  });
+});
 // /signup 요청시 회원가입 페이지로 이동
 app.get("/signup", isNotAuth, (req, res) => {
   res.render("signup");
@@ -123,6 +130,17 @@ app.post("/signup", async (req, res) => {
     console.log(e);
   }
 });
+// login.ejs에서 구글로그인을 눌렀을시 실행될 api, 구글 passport 전략이 실행된다
+app.get("/auth/google", passport.authenticate("google"));
+// 구글에서 콜백시켜서 오는 api엔드포인트
+// prettier-ignore
+app.get("/auth/google/callback", passport.authenticate("google", {
+    // 성공했을 시 이동할 주소
+    successReturnToOrRedirect: "/",
+    // 실패 시 이동할 주소
+    failureRedirect: "/login",
+  })
+);
 
 const PORT = 4000;
 app.listen(PORT, () => {

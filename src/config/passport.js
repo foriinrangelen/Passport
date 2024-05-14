@@ -2,6 +2,8 @@ const passport = require("passport");
 const User = require("../models/users.model");
 // 설치한 passport-local 모듈안의 strategy 가져오기
 const localStrategy = require("passport-local").Strategy;
+// 설치한 passport-google-oauth20 모듈안의 strategy 가져오기
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 // req.login(user) 메서드 실행시 실행되는함수, req.login(user) 내의 user가 serializeUser 메서드로 들어온다
 // 이 유저 정보를 이용해서 세션을 생성하고 저장한다
@@ -67,7 +69,8 @@ passport.deserializeUser((id, done) => {
 //   )
 // );
 // prettier-ignore
-passport.use("local", new localStrategy({ usernameField: "email", passwordField: "password" }, 
+// 설정으로 변경 후 밑에서 passport.use("local", localStrategyConfig);
+const localStrategyConfig= new localStrategy({ usernameField: "email", passwordField: "password" }, 
     async (email, password, done) => {
     try {
       const user = await User.findOne({ email: email.toLocaleLowerCase() });
@@ -75,7 +78,7 @@ passport.use("local", new localStrategy({ usernameField: "email", passwordField:
       if (!user) {
         return done(null, false, { message: `Email ${email} not found.` });
       }
-
+      
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
         return done(null, false, { message: `Invalid email & password.` });
@@ -86,4 +89,42 @@ passport.use("local", new localStrategy({ usernameField: "email", passwordField:
       return done(err);
     }
   })
+passport.use("local", localStrategyConfig);
+// ------------------------------------------------------------------------------------------
+// google passport 전략
+const googleClientId = "797292532711-fpa3ood5vfutq5e3ifmvfbq4i2bkdkgo.apps.googleusercontent.com";
+const googleClientSecret = "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";
+// 구글 전략 설정
+const GoogleStrategyConfig = new GoogleStrategy(
+  {
+    // 생성할때 받은 id 시크릿키, 리다이렉트 uri 입력
+    clientID: googleClientId,
+    clientSecret: googleClientSecret,
+    callbackURL: "/auth/google/callback",
+    // 무엇을 받아올건지 scope로 정의
+    scope: ["email", "profile"],
+  },
+  // 그전에 구글에서 '/auth/google/callback'로 권한 부여 후 엑세스 코드와 함께 콜백주소로 리다이렉션 시켜서
+  // 한번 더 요청을 보내서 accessToken, refreshToken, profile 을 받아옴
+  // accessToken, refreshToken, profile을 콜백으로 받아오기
+  async (accessToken, refreshToken, profile, done) => {
+    console.log(profile);
+    // 아이디를 가져와서 이미 가입된 유저인지 확인
+    try {
+      const user = await User.findOne({ googleId: profile.id });
+      // 이미 DB에 존재한다면(가입한 유저라면) user정보 return 해서 done으로 api 콜백으로 보내기
+      if (user) {
+        return done(null, user);
+      }
+      // DB에 존재하지 않는다면(가입하지 않은 유저라면) 새로운 유저를 생성해서 user정보 return 해서 done으로 api 콜백으로 보내기
+      const newUser = await new User({
+        email: profile.emails[0].value,
+        googleId: profile.id,
+      }).save();
+      return done(null, newUser);
+    } catch (err) {
+      return done(err);
+    }
+  }
 );
+passport.use("google", GoogleStrategyConfig);
