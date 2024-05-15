@@ -4,6 +4,8 @@ const User = require("../models/users.model");
 const localStrategy = require("passport-local").Strategy;
 // 설치한 passport-google-oauth20 모듈안의 strategy 가져오기
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
+// 카카오 가져오기
+const KakaoStrategy = require("passport-kakao").Strategy;
 
 // req.login(user) 메서드 실행시 실행되는함수, req.login(user) 내의 user가 serializeUser 메서드로 들어온다
 // 이 유저 정보를 이용해서 세션을 생성하고 저장한다
@@ -126,3 +128,34 @@ const GoogleStrategyConfig = new GoogleStrategy(
   }
 );
 passport.use("google", GoogleStrategyConfig);
+
+// 카카오 passport 전략 생성하기
+const KakaoStrategyConfig = new KakaoStrategy(
+  {
+    // 카카오 플랫폼에서 생성한 RESTapi키, 리다이렉트 uri 입력
+    clientID: process.env.KAKAO_CLIENT_ID,
+    callbackURL: "/auth/kakao/callback",
+  },
+  // 구글 전략 흐름과 동일
+  // accessToken, refreshToken, profile을 콜백으로 받아오기
+  async (accessToken, refreshToken, profile, done) => {
+    console.log(profile);
+    // 아이디를 가져와서 이미 가입된 유저인지 확인
+    try {
+      const user = await User.findOne({ kakaoId: profile.id });
+      // 이미 DB에 존재한다면(가입한 유저라면) user정보 return 해서 done으로 api 콜백으로 보내기
+      if (user) {
+        return done(null, user);
+      }
+      // DB에 존재하지 않는다면(가입하지 않은 유저라면) 새로운 유저를 생성해서 user정보 return 해서 done으로 api 콜백으로 보내기
+      const newUser = await new User({
+        kakaoId: profile.id,
+        email: profile._json.kakao_account.email,
+      }).save();
+      return done(null, newUser);
+    } catch (err) {
+      return done(err);
+    }
+  }
+);
+passport.use("kakao", KakaoStrategyConfig);

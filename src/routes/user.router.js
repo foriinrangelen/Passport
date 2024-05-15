@@ -64,5 +64,16 @@ usersRouter.get("/google/callback", passport.authenticate("google", {
     failureRedirect: "/login",
   })
 );
+// login.ejs에서 카카오로그인을 눌렀을시 실행될 api, 카카오 passport 전략이 실행된다
+usersRouter.get("/kakao", passport.authenticate("kakao"));
+// 카카오에서 콜백시켜서 오는 api엔드포인트
+// prettier-ignore
+usersRouter.get("/kakao/callback", passport.authenticate("kakao", {
+  // 성공했을 시 이동할 주소
+  successReturnToOrRedirect: "/",
+  // 실패 시 이동할 주소
+  failureRedirect: "/login",
+})
+);
 
 module.exports = usersRouter;

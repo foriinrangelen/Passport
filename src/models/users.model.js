@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema({
     // googleId 의 unique에 제약이 걸리기때문에(에러발생) 방지하기 위해 사용
     sparse: true,
   },
+  kakaoId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
 });
 // salt길이 설정
 const saltRounds = 10;
