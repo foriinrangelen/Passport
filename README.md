@@ -63,3 +63,8 @@ AWS SES, Mailgun 등여러 서비스가 있지만 본예제에서는 nodemailer 
 #### 사용한 SMTP 프로토콜 알아보기
 ![image](https://github.com/foriinrangelen/Passport/assets/123726292/fe5868a8-7304-4161-b1b9-ff93824a521b)
 
+### 카카오 로그인도 구현해보기
+1. `npm i passport-kakao`
+2. 카카오 사이트 이동 `https://developers.kakao.com/`
+3. 앱등록, 카카오로그인 활성화 ,플랫폼url, redirect uri등록
+4. REST api 키 가져오기
