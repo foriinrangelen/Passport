@@ -92,7 +92,6 @@ const localStrategyConfig= new localStrategy({ usernameField: "email", passwordF
 passport.use("local", localStrategyConfig);
 // ------------------------------------------------------------------------------------------
 // google passport 전략
-
 // 구글 전략 설정
 const GoogleStrategyConfig = new GoogleStrategy(
   {

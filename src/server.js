@@ -4,12 +4,14 @@ const path = require("path");
 const User = require("./models/users.model");
 const app = express();
 
-// passport 모듈 사용하기
-// .env설정
+// .env환경변수 설정파일을 사용하기위해
 require("dotenv").config();
+// passport 모듈 사용하기
 const passport = require("passport");
 const cookieSession = require("cookie-session");
-const { isAuth, isNotAuth } = require("./middlewares/auth");
+// const { isAuth, isNotAuth } = require("./middlewares/auth");
+const mainRouter = require("./routes/main.router");
+const usersRouter = require("./routes/user.router");
 // 임시 key
 const cookieEncryptionKey = "secret-key-123456789012345";
 app.use(
@@ -55,94 +57,21 @@ app.use(express.json());
 // form태그에서 전달받은 값을 받기위한 미들웨어
 app.use(express.urlencoded({ extended: false }));
 app.use("/static", express.static(path.join(__dirname, "..", "public")));
-// isAuth: 로그인이 되있는지 확인하는 함수 로그인이 되어있다면 next(), 안되있다면 로그인페이지로 리다이렉트
-app.get("/", isAuth, (req, res) => {
-  res.render("index");
-});
 
 // view engine 설정
 app.set("views", path.join(__dirname, "views"));
 // console.log(path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-mongoose
-  .connect(`mongodb+srv://kyyyy8629:1234@express-cluster.fzshmg3.mongodb.net/?retryWrites=true&w=majority&appName=express-Cluster`)
-  .then(() => {
-    console.log("connected to mongodb");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+// prettier-ignore
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {console.log("connected to mongodb");})
+  .catch((err) => {console.log(err);});
 // console.log(path.join(__dirname, "..", "public"));
 
-// /login 요청시 로그인페이지로 이동
-//isNotAuth: 로그인이 되어있다면 루트페이지로 리다이렉트 안되있다면 진행
-app.get("/login", isNotAuth, (req, res) => {
-  res.render("login");
-});
-app.post("/login", (req, res, next) => {
-  // 로컬 로그인전략을 사용하기때문에 passport모듈의 authenticate 메서드를 사용해서 "local"
-  // authenticate() : 전략 불러오는 메서드
-  // done 호출시 authenticate메서드 두번째 매개변수 콜백실행
-  // console.log("222222222222222222");
-  passport.authenticate("local", (err, user, info) => {
-    // done에 null이 담겨왔다면(에러발생) 담겨 왔다면 express 에러처리기로 이동(next)
-    if (err) return next(err);
-    // done에 user가 없고 info가 담겨왔다면(아이디가 틀렸거나 비밀번호가 틀렸거나)
-    if (!user) return res.json({ message: info });
-    // 정상적으로 일치했을시 passport에서 제공해주는 req.login()메서드 실행
-    // req.login(): 사용자세션을 수립하기위해 사용, 아래 과정을 통해 user 객체 정보가req.user에 할당된다
-    // 1. passport.serializer() 함수로 이동
-    console.log("req.login 들어가기전 user:", user);
-    req.logIn(user, (err) => {
-      // 에러 발생시 에러처리기로 이동
-      if (err) return next(err);
-      // 로그인 성공시 루트페이지로 이동
-      res.redirect("/");
-    });
-  })(req, res, next); // 미들웨어 안의 미들웨어를 호출하려면 ()을붙여 호출을 추가로 해줘야하고 안에 req,res,next 매개변수도 넣어줘야한다
-});
-// 로그아웃버튼 클릭시
-app.post("/logout", (req, res, next) => {
-  // req.logout(): passport에서 제공하는 메서드로,사용자 세션을 종료시키는 함수
-  req.logOut((err) => {
-    if (err) return next(err);
-    res.redirect("/");
-  });
-});
-// /signup 요청시 회원가입 페이지로 이동
-app.get("/signup", isNotAuth, (req, res) => {
-  res.render("signup");
-});
-
-// /signup 페이지에서 아이디,비밀번호 입력 후 요청시(post)
-app.post("/signup", async (req, res) => {
-  // 1.유저 객체 생성하기
-  const user = new User(req.body);
-  //   console.log(req.body);
-  //   console.log(user);
-  // 2. user collection에 저장하기(RDB에서는 Table)
-  try {
-    // 2-1. 정상적으로 저장 시
-    await user.save();
-    res.status(200).json({
-      success: true,
-    });
-  } catch (e) {
-    console.log(e);
-  }
-});
-// login.ejs에서 구글로그인을 눌렀을시 실행될 api, 구글 passport 전략이 실행된다
-app.get("/auth/google", passport.authenticate("google"));
-// 구글에서 콜백시켜서 오는 api엔드포인트
-// prettier-ignore
-app.get("/auth/google/callback", passport.authenticate("google", {
-    // 성공했을 시 이동할 주소
-    successReturnToOrRedirect: "/",
-    // 실패 시 이동할 주소
-    failureRedirect: "/login",
-  })
-);
+// 라우터등록
+app.use("/", mainRouter);
+app.use("/auth", usersRouter);
 
 const PORT = 4000;
 app.listen(PORT, () => {
