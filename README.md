@@ -50,3 +50,16 @@ OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 �
 #### Oauth 흐름
 ![image](https://github.com/foriinrangelen/Passport/assets/123726292/7a42c854-9245-4586-a3f5-d6eef640d170)
 
+### Email 기능 구현해보기
+AWS SES, Mailgun 등여러 서비스가 있지만 본예제에서는 nodemailer 사용
+1. `npm install nodemailer`
+#### 회원가입 시 이메일 보내기
+![image](https://github.com/foriinrangelen/Passport/assets/123726292/b02b0cb0-35b6-4e85-a94b-747778e3c612)
+
+#### 보내기위한 구글 이메일 app 비밀번호 생성
+1. `https://myaccount.google.com/security`
+2. 2단계 인증비밀번호 설정
+3. app 비밀번호 생성 (select app= mail, select device=맞는 device) > generate\
+#### 사용한 SMTP 프로토콜 알아보기
+![image](https://github.com/foriinrangelen/Passport/assets/123726292/fe5868a8-7304-4161-b1b9-ff93824a521b)
+
